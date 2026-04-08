@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Finanças Pro - Casal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        .app {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 4px solid #667eea;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .sync-status {
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            display: inline-block;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .sync-status.online { background: #4caf50; }
+        .sync-status.offline { background: #f44336; }
+        .sync-status.syncing { background: #ff9800; }
+
+        .menu {
+            display: flex;
+            background: #f5f5f5;
+            gap: 4px;
+            padding: 6px 8px;
+            flex-wrap: nowrap;
+            border-bottom: 1px solid #e0e0e0;
+            justify-content: center;
+        }
+
+        .menu-btn {
+            padding: 5px 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .menu-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .content {
+            padding: 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+        }
+
+        .card.iara { border-left-color: #e91e63; }
+        .card.felipe { border-left-color: #2196f3; }
+        .card.success { border-left-color: #4caf50; }
+        .card.card-clickable { cursor: pointer; }
+        .card.card-clickable:hover { background: #f9f9f9; border-left-width: 6px; }
+
+        .card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card .amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a237e;
+        }
+
+        .card .subtitle {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-pagar {
+            padding: 8px 16px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: auto;
+        }
+
+        .btn-pagar:hover {
+            background: #45a049;
+        }
+
+        .btn-pagar.pago {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .transaction-list {
+            margin-top: 20px;
+        }
+
+        .transaction-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .transaction-item.iara { border-left-color: #e91e63; }
+        .transaction-item.felipe { border-left-color: #2196f3; }
+
+        .transaction-info h4 {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .transaction-info p {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .transaction-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        .transaction-category {
+            display: inline-block;
+            background: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            color: #666;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-box .label {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-box .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a237e;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: relative;
+            height: 300px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge.iara { background: #f3e5f5; color: #e91e63; }
+        .badge.felipe { background: #e3f2fd; color: #2196f3; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { 
+            display: flex; 
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+        }
+
+        .modal-close:hover { color: #000; }
+
+        .conta-resumo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .conta-resumo h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .conta-resumo .valor {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .contas-mes-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .conta-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conta-item.paga {
+            background: #d4edda;
+        }
+
+        .conta-item.pendente {
+            background: #fff3cd;
+        }
+
+        .conta-info {
+            flex: 1;
+        }
+
+        .conta-info h4 {
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .conta-info p {
+            font-size: 0.8rem;
+            color: #999;
+            margin: 2px 0;
+        }
+
+        .periodo-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .periodo-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .periodo-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .periodo-btn:hover {
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .menu {
+                gap: 6px;
+            }
+
+            .menu-btn {
+                flex: 1;
+                font-size: 0.75rem;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="header">
+        <h1>💰 Finanças Pro - Casal</h1>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px; justify-content: center;">
+            <div class="sync-status online" id="sync-status">🟢 Sincronizado</div>
+            <button onclick="atualizarDados()" style="padding: 4px 10px; background: #4caf50; color: white; border: none; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">🔄 Atualizar</button>
+        </div>
+    </div>
+
+    <div class="menu">
+        <button class="menu-btn active" onclick="showPage('dashboard')">📊 Dash</button>
+        <button class="menu-btn" onclick="showPage('lancamentos')">➕ Lanç</button>
+        <button class="menu-btn" onclick="showPage('relatorio')">📈 Rel</button>
+        <button class="menu-btn" onclick="showPage('configuracoes')">⚙️ Conf</button>
+    </div>
+
+    <div class="content">
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="page active">
+            <div class="periodo-selector">
+                <button class="periodo-btn active" onclick="mudarMes(-1)">⬅️ Anterior</button>
+                <span style="padding: 8px 16px; background: white; border-radius: 20px; font-weight: 600; display: flex; align-items: center;" id="mes-selecionado">Dezembro 2024</span>
+                <button class="periodo-btn active" onclick="mudarMes(1)">Próximo ➡️</button>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card iara card-clickable" onclick="abrirModalContas('Iara')">
+                    <h3>👩 Conta da Iara</h3>
+                    <div class="amount" id="saldo-iara">R$ 0,00</div>
+                    <p class="subtitle">Saldo disponível • Clique para detalhes</p>
+                </div>
+
+                <div class="card felipe card-clickable" onclick="abrirModalContas('Felipe')">
+                    <h3>👨 Conta do Felipe</h3>
+                    <div class="amount" id="saldo-felipe">R$ 0,00</div>
+                    <p class="subtitle">Saldo disponível • Clique para detalhes</p>
+                </div>
+
+                <div class="card success">
+                    <h3>💹 Saldo Total</h3>
+                    <div class="amount" id="saldo-total">R$ 0,00</div>
+                    <p class="subtitle">Ambas contas</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">💵 Receitas do Mês</div>
+                    <div class="value" id="receitas-mes">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">💸 Despesas do Mês</div>
+                    <div class="value" id="despesas-mes">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">📊 Sobra do Mês</div>
+                    <div class="value" id="lucro-mes">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">⏳ A Pagar</div>
+                    <div class="value" id="a-pagar">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="graficoCategoria"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="graficoPessoa"></canvas>
+            </div>
+        </div>
+
+        <!-- LANÇAMENTOS -->
+        <div id="lancamentos" class="page">
+            <div class="card">
+                <h3>📝 Novo Lançamento</h3>
+
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="tipo-lancamento" onchange="atualizarCamposFormulario()">
+                        <option value="despesa">💸 Despesa</option>
+                        <option value="receita">💵 Receita</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Pessoa</label>
+                    <select id="pessoa-lancamento">
+                        <option value="Iara">👩 Iara</option>
+                        <option value="Felipe">👨 Felipe</option>
+                        <option value="Casal">👨‍👩‍👧 Casal</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="desc-lancamento" placeholder="Ex: Mercado, Gasolina, Aluguel...">
+                </div>
+
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoria-lancamento">
+                        <option value="Mercado">🛒 Mercado</option>
+                        <option value="Transporte">🚗 Transporte</option>
+                        <option value="Cartão">💳 Cartão</option>
+                        <option value="Crédito">📊 Crédito</option>
+                        <option value="Moradia">🏠 Moradia</option>
+                        <option value="Saúde">🏥 Saúde</option>
+                        <option value="Educação">📚 Educação</option>
+                        <option value="Lazer">🎮 Lazer</option>
+                        <option value="Utilidades">⚡ Utilidades</option>
+                        <option value="Outro">📌 Outro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="valor-lancamento" placeholder="0,00" step="0.01" min="0">
+                </div>
+
+                <div class="form-group" id="grupo-data-despesa">
+                    <label>Data</label>
+                    <input type="date" id="data-lancamento">
+                </div>
+
+                <div class="form-group" id="grupo-mes-receita" style="display: none;">
+                    <label>Período de Entrada</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <select id="mes-receita" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="0">Janeiro</option>
+                            <option value="1">Fevereiro</option>
+                            <option value="2">Março</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Maio</option>
+                            <option value="5">Junho</option>
+                            <option value="6">Julho</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Setembro</option>
+                            <option value="9">Outubro</option>
+                            <option value="10">Novembro</option>
+                            <option value="11">Dezembro</option>
+                        </select>
+                        <input type="number" id="ano-receita" min="2020" max="2099" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <small style="color: #999; margin-top: 6px; display: block;">Use mês/ano para receitas futuras</small>
+                </div>
+
+                <div class="form-group" id="grupo-metodo">
+                    <label>Método de Pagamento</label>
+                    <select id="metodo-lancamento">
+                        <option value="Dinheiro">💵 Dinheiro</option>
+                        <option value="Débito">🏦 Débito</option>
+                        <option value="Crédito">💳 Crédito</option>
+                        <option value="Pix">📱 Pix</option>
+                        <option value="Transferência">🔄 Transferência</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="grupo-parcelas">
+                    <label>Nº de Parcelas</label>
+                    <input type="number" id="num-parcelas" value="1" min="1" max="12" onchange="atualizarInfoParcelas()">
+                    
+                    <div style="margin-top: 12px; padding: 12px; background: #f0f0f0; border-radius: 8px;">
+                        <label style="margin-bottom: 8px;">O valor que você digitou é:</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="flex: 1; display: flex; align-items: center; margin: 0;">
+                                <input type="radio" name="tipo-valor" value="total" checked onchange="atualizarInfoParcelas()">
+                                <span style="margin-left: 8px;">💰 Valor Total (vou dividir)</span>
+                            </label>
+                            <label style="flex: 1; display: flex; align-items: center; margin: 0;">
+                                <input type="radio" name="tipo-valor" value="unitario" onchange="atualizarInfoParcelas()">
+                                <span style="margin-left: 8px;">📊 Valor por Parcela</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <small id="info-parcelas" style="color: #999; display: block; margin-top: 10px;"></small>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="obs-lancamento" placeholder="Notas adicionais..." rows="3"></textarea>
+                </div>
+
+                <button onclick="adicionarLancamento()">✅ Salvar Lançamento</button>
+            </div>
+
+            <div class="transaction-list">
+                <h3 style="margin-bottom: 15px; color: #333;">📋 Últimos Lançamentos</h3>
+                <div id="lista-lancamentos"></div>
+            </div>
+        </div>
+
+        <!-- RELATÓRIO -->
+        <div id="relatorio" class="page">
+            <div class="card">
+                <h3>📅 Período de Análise</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; margin-bottom: 6px;">📅 De:</label>
+                        <input type="month" id="rel-mes-inicio" onchange="atualizarRelatorio()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; margin-bottom: 6px;">📅 Até:</label>
+                        <input type="month" id="rel-mes-fim" onchange="atualizarRelatorio()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; margin-bottom: 6px;">👤 Pessoa:</label>
+                        <select id="filtro-pessoa" onchange="atualizarRelatorio()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="">Todas</option>
+                            <option value="Iara">👩 Iara</option>
+                            <option value="Felipe">👨 Felipe</option>
+                            <option value="Casal">👨‍👩‍👧 Casal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; margin-bottom: 6px;">📊 Tipo:</label>
+                        <select id="filtro-tipo" onchange="atualizarRelatorio()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="">Todos</option>
+                            <option value="receita">💵 Receitas</option>
+                            <option value="despesa">💸 Despesas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display: block; font-size: 0.9rem; margin-bottom: 6px;">🏷️ Categoria:</label>
+                    <select id="filtro-categoria" onchange="atualizarRelatorio()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="">Todas as categorias</option>
+                        <option value="Mercado">🛒 Mercado</option>
+                        <option value="Transporte">🚗 Transporte</option>
+                        <option value="Cartão">💳 Cartão</option>
+                        <option value="Crédito">📊 Crédito</option>
+                        <option value="Moradia">🏠 Moradia</option>
+                        <option value="Saúde">🏥 Saúde</option>
+                        <option value="Educação">📚 Educação</option>
+                        <option value="Lazer">🎮 Lazer</option>
+                        <option value="Utilidades">⚡ Utilidades</option>
+                        <option value="Outro">📌 Outro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">💵 Receitas</div>
+                    <div class="value" id="rel-receitas">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">💸 Despesas</div>
+                    <div class="value" id="rel-despesas">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">📊 Saldo</div>
+                    <div class="value" id="rel-diferenca">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">📈 % Gasto</div>
+                    <div class="value" id="rel-percentual">0%</div>
+                </div>
+            </div>
+
+            <div class="transaction-list">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Detalhamento</h3>
+                <div id="lista-relatorio"></div>
+            </div>
+        </div>
+
+        <!-- CONFIGURAÇÕES -->
+        <div id="configuracoes" class="page">
+            <div class="card">
+                <h3>⚙️ Sistema</h3>
+                <button onclick="exportarBackup()">📥 Exportar Backup (JSON)</button>
+                <button class="btn-secondary" onclick="restaurarBackup()" style="margin-top: 10px;">📤 Importar Backup</button>
+                <button class="btn-danger" onclick="limparTudo()" style="margin-top: 10px;">🗑️ Limpar Todos os Dados</button>
+            </div>
+
+            <div class="card">
+                <h3>📱 Google Sheets Integration</h3>
+                <div class="form-group">
+                    <label>URL da Google Apps Script</label>
+                    <input type="text" id="google-api-url" placeholder="Cole a URL do seu Google Apps Script">
+                </div>
+                <button class="btn-secondary" onclick="salvarConfigGoogle()">💾 Salvar Config</button>
+                <p style="font-size: 0.8rem; color: #999; margin-top: 10px;">Sincroniza automaticamente ao adicionar lançamentos</p>
+            </div>
+
+            <div class="card">
+                <h3>📊 Estatísticas</h3>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="label">Total de Lançamentos</div>
+                        <div class="value" id="total-lancamentos">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">Uso de Armazenamento</div>
+                        <div class="value" id="uso-storage">0 KB</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONTAS DO MÊS -->
+<div id="modalContas" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fecharModalContas()">&times;</button>
+        <h2 id="modalContasTitle" style="margin-bottom: 20px; color: #1a237e;">Contas do Mês</h2>
+
+        <div class="conta-resumo">
+            <h2 id="resumoNome">Iara</h2>
+            <p>Saldo Total em Conta:</p>
+            <div class="valor" id="resumoSaldo">R$ 0,00</div>
+            <p style="margin-top: 15px; font-size: 0.95rem; line-height: 1.8;">
+                <span id="resumoPendente">Pendente: R$ 0,00</span><br>
+                <span id="resumoPago">Pago: R$ 0,00</span><br>
+                <span style="margin-top: 8px; display: block; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.85rem;" id="resumoSobraMesAnterior">Sobra Mês Anterior: R$ 0,00</span>
+                <span style="margin-top: 6px; display: block; font-weight: bold; color: #fff;" id="resumoSobraMes">Sobra do Mês: R$ 0,00</span>
+            </p>
+        </div>
+
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="background: white; padding: 12px; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 6px;">💵 Receitas do Mês</div>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #4caf50;" id="modalReceitasMes">R$ 0,00</div>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 6px;">💸 Despesas do Mês</div>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #f44336;" id="modalDespesasMes">R$ 0,00</div>
+                </div>
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 6px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 6px;">⏳ Despesas a Pagar</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #ff9800;" id="modalDespesasAPagar">R$ 0,00</div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 15px; color: #333;">📋 Receitas do Mês</h3>
+        <div class="contas-mes-list" id="receitasMesList"></div>
+
+        <h3 style="margin: 20px 0 15px 0; color: #333;">💳 Contas a Pagar</h3>
+        <div class="contas-mes-list" id="contasMesList"></div>
+    </div>
+</div>
+
+<!-- MODAL DE PAGAMENTO -->
+<div id="modalPagamento" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fecharModalPagamento()">&times;</button>
+        <h3 style="margin-bottom: 20px; color: #1a237e;">💳 Registrar Pagamento</h3>
+        
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 8px 0; display: flex; justify-content: space-between;">
+                <strong>Descrição:</strong>
+                <span id="pagDesc"></span>
+            </p>
+            <p style="margin: 8px 0; display: flex; justify-content: space-between;">
+                <strong>Valor Original:</strong>
+                <span id="pagValorOriginal"></span>
+            </p>
+            <p style="margin: 8px 0; display: flex; justify-content: space-between;">
+                <strong>Data Vencimento:</strong>
+                <span id="pagData"></span>
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>Valor Pago (R$)</label>
+            <input type="number" id="valorPago" step="0.01" min="0" placeholder="0,00">
+        </div>
+
+        <div class="form-group">
+            <label>Data do Pagamento</label>
+            <input type="date" id="dataPago">
+        </div>
+
+        <div class="form-group">
+            <label>Método</label>
+            <select id="metodoPago">
+                <option value="Dinheiro">💵 Dinheiro</option>
+                <option value="Débito">🏦 Débito</option>
+                <option value="Crédito">💳 Crédito</option>
+                <option value="Pix">📱 Pix</option>
+                <option value="Transferência">🔄 Transferência</option>
+            </select>
+        </div>
+
+        <button onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
+        <button class="btn-secondary" onclick="fecharModalPagamento()" style="background: #ccc; margin-top: 10px;">❌ Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL DE EDITAR LANÇAMENTO -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fecharModalEditar()">&times;</button>
+        <h3 style="margin-bottom: 20px; color: #1a237e;">✏️ Editar Lançamento</h3>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="edit-desc">
+        </div>
+
+        <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="number" id="edit-valor" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="edit-data">
+        </div>
+
+        <div class="form-group" id="edit-grupo-categoria">
+            <label>Categoria</label>
+            <select id="edit-categoria">
+                <option value="Mercado">🛒 Mercado</option>
+                <option value="Transporte">🚗 Transporte</option>
+                <option value="Cartão">💳 Cartão</option>
+                <option value="Crédito">📊 Crédito</option>
+                <option value="Moradia">🏠 Moradia</option>
+                <option value="Saúde">🏥 Saúde</option>
+                <option value="Educação">📚 Educação</option>
+                <option value="Lazer">🎮 Lazer</option>
+                <option value="Utilidades">⚡ Utilidades</option>
+                <option value="Outro">📌 Outro</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="edit-grupo-metodo">
+            <label>Método</label>
+            <select id="edit-metodo">
+                <option value="Dinheiro">💵 Dinheiro</option>
+                <option value="Débito">🏦 Débito</option>
+                <option value="Crédito">💳 Crédito</option>
+                <option value="Pix">📱 Pix</option>
+                <option value="Transferência">🔄 Transferência</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Observações</label>
+            <textarea id="edit-obs" rows="3"></textarea>
+        </div>
+
+        <button onclick="salvarEdicao()">✅ Salvar Alterações</button>
+        <button class="btn-secondary" onclick="fecharModalEditar()" style="background: #ccc; margin-top: 10px;">❌ Cancelar</button>
+    </div>
+</div>
+
+<script>
+    // ==================== CONFIGURAÇÃO ====================
+    const STORAGE_KEYS = {
+        lancamentos: 'financas_lancamentos',
+        config: 'financas_config'
+    };
+
+    let lancamentos = [];
+    let config = { googleApiUrl: '' };
+    let mesSelecionado = new Date().getMonth();
+    let anoSelecionado = new Date().getFullYear();
+    let contaPagamentoAtual = null;
+    let lancamentoEditandoAtual = null;
+
+    function abrirModalEditar(lancamentoId) {
+        const lancamento = lancamentos.find(l => l.id === lancamentoId);
+        if (!lancamento) return;
+
+        lancamentoEditandoAtual = lancamento;
+
+        document.getElementById('edit-desc').value = lancamento.desc;
+        document.getElementById('edit-valor').value = lancamento.valor;
+        document.getElementById('edit-data').value = lancamento.data;
+        document.getElementById('edit-obs').value = lancamento.obs || '';
+
+        if (lancamento.tipo === 'despesa') {
+            document.getElementById('edit-categoria').value = lancamento.categoria;
+            document.getElementById('edit-metodo').value = lancamento.metodo;
+            document.getElementById('edit-grupo-categoria').style.display = 'block';
+            document.getElementById('edit-grupo-metodo').style.display = 'block';
+        } else {
+            document.getElementById('edit-grupo-categoria').style.display = 'none';
+            document.getElementById('edit-grupo-metodo').style.display = 'none';
+        }
+
+        document.getElementById('modalEditar').classList.add('active');
+    }
+
+    function fecharModalEditar() {
+        document.getElementById('modalEditar').classList.remove('active');
+        lancamentoEditandoAtual = null;
+    }
+
+    function salvarEdicao() {
+        if (!lancamentoEditandoAtual) return;
+
+        const novaDesc = document.getElementById('edit-desc').value;
+        const novoValor = parseFloat(document.getElementById('edit-valor').value);
+        const novaData = document.getElementById('edit-data').value;
+        const novaObs = document.getElementById('edit-obs').value;
+
+        if (!novaDesc || !novoValor || novoValor <= 0 || !novaData) {
+            alert('❌ Preencha todos os campos corretamente');
+            return;
+        }
+
+        const index = lancamentos.findIndex(l => l.id === lancamentoEditandoAtual.id);
+        if (index !== -1) {
+            lancamentos[index].desc = novaDesc;
+            lancamentos[index].valor = novoValor;
+            lancamentos[index].data = novaData;
+            lancamentos[index].obs = novaObs;
+
+            if (lancamentos[index].tipo === 'despesa') {
+                lancamentos[index].categoria = document.getElementById('edit-categoria').value;
+                lancamentos[index].metodo = document.getElementById('edit-metodo').value;
+            }
+
+            salvarDados();
+
+            if (config.googleApiUrl) {
+                sincronizarGoogle(lancamentos[index]);
+            }
+
+            alert('✅ Lançamento atualizado com sucesso!');
+            fecharModalEditar();
+            carregarUltimosLancamentos();
+            carregarDashboard();
+        }
+    }
+
+    // ==================== INICIALIZAÇÃO ====================
+    function inicializar() {
+        // Carrega config do localStorage (essa fica local mesmo)
+        config = JSON.parse(localStorage.getItem(STORAGE_KEYS.config)) || { googleApiUrl: '' };
+
+        definirDataHoje();
+        
+        // IMPORTANTE: NÃO carrega do localStorage!
+        // Vamos carregar DO FIREBASE em vez disso
+        lancamentos = [];
+        
+        // Carrega do Firebase IMEDIATAMENTE
+        console.log('⏳ Carregando dados do Firebase...');
+        setTimeout(() => {
+            carregarDoFirebase();
+        }, 500);
+
+        carregarDashboard();
+        carregarUltimosLancamentos();
+        atualizarEstatisticas();
+        inicializarRelatorio();
+    }
+
+    function carregarDadosGoogle() {
+        if (!config.googleApiUrl) {
+            console.log('URL do Google Sheets não configurada');
+            return;
+        }
+
+        // Tenta carregar os dados com CORS
+        fetch(config.googleApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'buscar'
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro na resposta');
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.success && data.lancamentos && data.lancamentos.length > 0) {
+                console.log('Dados recebidos do Google Sheets:', data.lancamentos.length);
+                
+                // Se não tiver dados locais, carrega tudo
+                if (lancamentos.length === 0) {
+                    lancamentos = data.lancamentos;
+                } else {
+                    // Mescla dados do Google Sheets com dados locais
+                    const idsLocais = new Set(lancamentos.map(l => l.id));
+                    const novosDados = data.lancamentos.filter(l => !idsLocais.has(l.id));
+                    
+                    if (novosDados.length > 0) {
+                        lancamentos = [...lancamentos, ...novosDados];
+                        console.log(`Sincronizado: ${novosDados.length} novo(s) lançamento(s)`);
+                    }
+                }
+                
+                salvarDados();
+                carregarDashboard();
+                carregarUltimosLancamentos();
+            }
+        })
+        .catch(error => {
+            console.log('Erro ao carregar dados do Google Sheets. Usando dados locais.', error);
+            // Continua com dados locais se der erro
+        });
+    }
+
+    function atualizarDados() {
+        // Usa Firebase direto, sem validação!
+        const status = document.getElementById('sync-status');
+        status.textContent = "🔄 Atualizando...";
+        status.className = "sync-status syncing";
+
+        // Cria um nome único para o callback
+        const callbackName = 'jsonpCallback_' + Date.now();
+        
+        // Define a função de callback global
+        window[callbackName] = function(data) {
+            try {
+                if (data && data.success && data.lancamentos) {
+                    console.log('Dados recebidos:', data.lancamentos.length);
+                    
+                    // Substitui pelos dados do Google Sheets
+                    lancamentos = data.lancamentos;
+                    salvarDados();
+                    
+                    carregarDashboard();
+                    carregarUltimosLancamentos();
+                    
+                    status.textContent = "🟢 Atualizado!";
+                    status.className = "sync-status online";
+                    
+                    alert(`✅ Sincronização realizada!\n${data.lancamentos.length} lançamentos carregados`);
+                    
+                    setTimeout(() => {
+                        status.textContent = "🟢 Sincronizado";
+                    }, 3000);
+                } else {
+                    throw new Error('Dados inválidos');
+                }
+            } catch (error) {
+                console.error('Erro ao processar dados:', error);
+                status.textContent = "🔴 Erro na atualização";
+                status.className = "sync-status offline";
+                alert('❌ Erro ao sincronizar:\n' + error.message);
+                
+                setTimeout(() => {
+                    status.textContent = "🟢 Sincronizado";
+                    status.className = "sync-status online";
+                }, 3000);
+            } finally {
+                // Remove o script e a função
+                const script = document.getElementById('jsonp-script-' + callbackName);
+                if (script) script.remove();
+                delete window[callbackName];
+            }
+        };
+
+        // Cria o script JSONP
+        const script = document.createElement('script');
+        script.id = 'jsonp-script-' + callbackName;
+        script.src = config.googleApiUrl + '?action=buscar&callback=' + callbackName;
+        
+        // Trata erro de timeout
+        const timeout = setTimeout(() => {
+            status.textContent = "🔴 Erro na atualização";
+            status.className = "sync-status offline";
+            alert('❌ Timeout: URL do Google Apps Script não respondeu');
+            script.remove();
+            delete window[callbackName];
+            
+            setTimeout(() => {
+                status.textContent = "🟢 Sincronizado";
+                status.className = "sync-status online";
+            }, 3000);
+        }, 10000);
+
+        script.onload = () => clearTimeout(timeout);
+        script.onerror = () => {
+            clearTimeout(timeout);
+            status.textContent = "🔴 Erro na atualização";
+            status.className = "sync-status offline";
+            alert('❌ Erro ao carregar dados:\nVerifique se a URL está correta!');
+            script.remove();
+            delete window[callbackName];
+            
+            setTimeout(() => {
+                status.textContent = "🟢 Sincronizado";
+                status.className = "sync-status online";
+            }, 3000);
+        };
+
+        document.head.appendChild(script);
+    }
+
+    function inicializarRelatorio() {
+        // Define período padrão (últimos 3 meses)
+        const hoje = new Date();
+        const mesAnterior3 = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
+        
+        const mesInicio = mesAnterior3.toISOString().split('T')[0].substring(0, 7);
+        const mesFim = hoje.toISOString().split('T')[0].substring(0, 7);
+        
+        document.getElementById('rel-mes-inicio').value = mesInicio;
+        document.getElementById('rel-mes-fim').value = mesFim;
+        
+        // Carrega o relatório
+        atualizarRelatorio();
+    }
+
+    function definirDataHoje() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('data-lancamento').value = hoje;
+        document.getElementById('dataPago').value = hoje;
+    }
+
+    // ==================== DASHBOARD ====================
+    function carregarDashboard() {
+        const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        
+        document.getElementById('mes-selecionado').textContent = 
+            `${meses[mesSelecionado]} ${anoSelecionado}`;
+
+        // Calcula saldo acumulado até o mês selecionado
+        let saldoIaraAcumulado = 0;
+        let saldoFelipeAcumulado = 0;
+
+        // Percorre todos os meses até o mês selecionado
+        for (let m = 0; m <= mesSelecionado; m++) {
+            const lancamentosDoMes = lancamentos.filter(l => {
+                if (!l.data) return false;
+                const data = new Date(l.data + 'T00:00:00');
+                const mesData = data.getMonth();
+                const anoData = data.getFullYear();
+                return mesData === m && anoData === anoSelecionado;
+            });
+
+            lancamentosDoMes.forEach(l => {
+                const valor = parseFloat(l.valor || 0);
+                if (l.pessoa === 'Iara') {
+                    if (l.tipo === 'receita') saldoIaraAcumulado += valor;
+                    if (l.tipo === 'despesa') saldoIaraAcumulado -= valor;
+                }
+                if (l.pessoa === 'Felipe') {
+                    if (l.tipo === 'receita') saldoFelipeAcumulado += valor;
+                    if (l.tipo === 'despesa') saldoFelipeAcumulado -= valor;
+                }
+                if (l.pessoa === 'Casal') {
+                    if (l.tipo === 'receita') {
+                        saldoIaraAcumulado += valor / 2;
+                        saldoFelipeAcumulado += valor / 2;
+                    }
+                    if (l.tipo === 'despesa') {
+                        saldoIaraAcumulado -= valor / 2;
+                        saldoFelipeAcumulado -= valor / 2;
+                    }
+                }
+            });
+        }
+
+        document.getElementById('saldo-iara').textContent = formatarMoeda(saldoIaraAcumulado);
+        document.getElementById('saldo-felipe').textContent = formatarMoeda(saldoFelipeAcumulado);
+        document.getElementById('saldo-total').textContent = formatarMoeda(saldoIaraAcumulado + saldoFelipeAcumulado);
+
+        // Filtra lançamentos DO MÊS SELECIONADO para mostrar receitas/despesas do mês
+        const lancamentosMesAtual = lancamentos.filter(l => {
+            if (!l.data) return false;
+            const data = new Date(l.data + 'T00:00:00');
+            const mesData = data.getMonth();
+            const anoData = data.getFullYear();
+            return mesData === mesSelecionado && anoData === anoSelecionado;
+        });
+
+        const receitasMes = lancamentosMesAtual
+            .filter(l => l.tipo === 'receita' && l.valor > 0)
+            .reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+
+        const despesasMes = lancamentosMesAtual
+            .filter(l => l.tipo === 'despesa' && l.valor > 0)
+            .reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+
+        document.getElementById('receitas-mes').textContent = formatarMoeda(receitasMes);
+        document.getElementById('despesas-mes').textContent = formatarMoeda(despesasMes);
+        document.getElementById('lucro-mes').textContent = formatarMoeda(receitasMes - despesasMes);
+
+        const aPagar = lancamentosMesAtual
+            .filter(l => l.tipo === 'despesa' && !l.pago)
+            .reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+
+        document.getElementById('a-pagar').textContent = formatarMoeda(aPagar);
+
+        desenharGraficoCategoria(lancamentosMesAtual);
+        desenharGraficoPessoa(lancamentosMesAtual);
+    }
+
+    function mudarMes(direcao) {
+        mesSelecionado += direcao;
+
+        if (mesSelecionado > 11) {
+            mesSelecionado = 0;
+            anoSelecionado++;
+        } else if (mesSelecionado < 0) {
+            mesSelecionado = 11;
+            anoSelecionado--;
+        }
+
+        carregarDashboard();
+        carregarUltimosLancamentos();
+    }
+
+    function calcularTotaisGerais() {
+        let receitas = 0, despesas = 0;
+        lancamentos.forEach(l => {
+            const valor = parseFloat(l.valor || 0);
+            if (l.tipo === 'receita') receitas += valor;
+            if (l.tipo === 'despesa') despesas += valor;
+        });
+        return [receitas, despesas];
+    }
+
+    function calcularSaldoPessoa(pessoa) {
+        let saldo = 0;
+        lancamentos
+            .filter(l => l.pessoa === pessoa || l.pessoa === 'Casal')
+            .forEach(l => {
+                const valor = parseFloat(l.valor || 0);
+                if (l.tipo === 'receita') saldo += valor;
+                if (l.tipo === 'despesa') saldo -= valor;
+            });
+        return saldo;
+    }
+
+    // ==================== GRÁFICOS ====================
+    let chartCategoria = null;
+    let chartPessoa = null;
+
+    function desenharGraficoCategoria(dados) {
+        const ctx = document.getElementById('graficoCategoria');
+        if (!ctx) return;
+        
+        const categorias = {};
+        dados.forEach(l => {
+            if (l.tipo === 'despesa') {
+                categorias[l.categoria] = (categorias[l.categoria] || 0) + l.valor;
+            }
+        });
+
+        const labels = Object.keys(categorias);
+        const values = Object.values(categorias);
+
+        if (chartCategoria) chartCategoria.destroy();
+
+        chartCategoria = new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Despesas por Categoria (Mês)' }
+                }
+            }
+        });
+    }
+
+    function desenharGraficoPessoa(dados) {
+        const ctx = document.getElementById('graficoPessoa');
+        if (!ctx) return;
+
+        const receitas = {};
+        const despesas = {};
+
+        ['Iara', 'Felipe', 'Casal'].forEach(p => {
+            receitas[p] = dados
+                .filter(l => l.pessoa === p && l.tipo === 'receita')
+                .reduce((a, l) => a + l.valor, 0);
+
+            despesas[p] = dados
+                .filter(l => l.pessoa === p && l.tipo === 'despesa')
+                .reduce((a, l) => a + l.valor, 0);
+        });
+
+        if (chartPessoa) chartPessoa.destroy();
+
+        chartPessoa = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(receitas),
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: Object.values(receitas),
+                        backgroundColor: '#4caf50'
+                    },
+                    {
+                        label: 'Despesas',
+                        data: Object.values(despesas),
+                        backgroundColor: '#f44336'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Receitas vs Despesas por Pessoa (Mês)' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ==================== LANÇAMENTOS ====================
+    function adicionarLancamento() {
+        const tipo = document.getElementById('tipo-lancamento').value;
+        const pessoa = document.getElementById('pessoa-lancamento').value;
+        const desc = document.getElementById('desc-lancamento').value;
+        const categoria = document.getElementById('categoria-lancamento').value;
+        const valor = parseFloat(document.getElementById('valor-lancamento').value);
+        let data;
+
+        // Para receitas, usar mês/ano; para despesas, usar data completa
+        if (tipo === 'receita') {
+            const mesReceita = parseInt(document.getElementById('mes-receita').value);
+            const anoReceita = parseInt(document.getElementById('ano-receita').value);
+            // Define como primeiro dia do mês para receitas
+            data = `${anoReceita}-${String(mesReceita + 1).padStart(2, '0')}-01`;
+        } else {
+            data = document.getElementById('data-lancamento').value;
+        }
+
+        const metodo = document.getElementById('metodo-lancamento').value;
+        const obs = document.getElementById('obs-lancamento').value;
+        const numParcelas = parseInt(document.getElementById('num-parcelas').value) || 1;
+        const tipoValor = document.querySelector('input[name="tipo-valor"]:checked').value;
+
+        if (!desc || !valor || valor <= 0 || !data) {
+            alert('❌ Preencha todos os campos corretamente');
+            return;
+        }
+
+        const dataInicial = new Date(data);
+        
+        // Calcula o valor de cada parcela
+        let valorParcela;
+        if (tipoValor === 'total') {
+            // Usuário digitou o valor total, dividir por parcelas
+            valorParcela = valor / numParcelas;
+        } else {
+            // Usuário digitou o valor da parcela, usar como está
+            valorParcela = valor;
+        }
+
+        for (let i = 0; i < numParcelas; i++) {
+            const dataParcela = new Date(dataInicial);
+            dataParcela.setMonth(dataParcela.getMonth() + i);
+
+            const novo = {
+                id: Date.now() + i,
+                tipo,
+                pessoa,
+                desc: numParcelas > 1 ? `${desc} (Parcela ${i + 1}/${numParcelas})` : desc,
+                categoria,
+                valor: valorParcela,
+                data: dataParcela.toISOString().split('T')[0],
+                metodo: tipo === 'receita' ? 'Receita' : metodo,
+                obs,
+                pago: false,
+                valorPago: 0,
+                dataPago: null,
+                metodoPago: null,
+                dataCriacao: new Date().toISOString(),
+                numParcela: i + 1,
+                totalParcelas: numParcelas
+            };
+
+            lancamentos.push(novo);
+
+            if (config.googleApiUrl) {
+                sincronizarGoogle(novo);
+            }
+        }
+
+        salvarDados();
+
+        document.getElementById('desc-lancamento').value = '';
+        document.getElementById('valor-lancamento').value = '';
+        document.getElementById('obs-lancamento').value = '';
+        document.getElementById('num-parcelas').value = '1';
+        document.getElementById('info-parcelas').textContent = '';
+        definirDataHoje();
+
+        carregarUltimosLancamentos();
+        carregarDashboard();
+
+        let msg;
+        if (numParcelas > 1) {
+            if (tipoValor === 'total') {
+                msg = `✅ ${numParcelas} parcelas de ${formatarMoeda(valorParcela)} (Total: ${formatarMoeda(valor)}) adicionadas!`;
+            } else {
+                msg = `✅ ${numParcelas} parcelas de ${formatarMoeda(valorParcela)} (Total: ${formatarMoeda(valorParcela * numParcelas)}) adicionadas!`;
+            }
+        } else {
+            msg = '✅ Lançamento adicionado com sucesso!';
+        }
+        alert(msg);
+    }
+
+    function atualizarInfoParcelas() {
+        const valor = parseFloat(document.getElementById('valor-lancamento').value) || 0;
+        const numParcelas = parseInt(document.getElementById('num-parcelas').value) || 1;
+        const tipo = document.getElementById('tipo-lancamento').value;
+        const tipoValor = document.querySelector('input[name="tipo-valor"]:checked').value;
+
+        if (numParcelas > 1 && tipo === 'despesa') {
+            let valorParcela;
+            let totalValor;
+            
+            if (tipoValor === 'total') {
+                valorParcela = valor / numParcelas;
+                totalValor = valor;
+                document.getElementById('info-parcelas').textContent = 
+                    `📊 Valor Total: ${formatarMoeda(totalValor)} dividido em ${numParcelas}x de ${formatarMoeda(valorParcela)}`;
+            } else {
+                valorParcela = valor;
+                totalValor = valor * numParcelas;
+                document.getElementById('info-parcelas').textContent = 
+                    `📊 ${numParcelas}x de ${formatarMoeda(valorParcela)} = Total: ${formatarMoeda(totalValor)}`;
+            }
+        } else {
+            document.getElementById('info-parcelas').textContent = '';
+        }
+    }
+
+    function carregarUltimosLancamentos() {
+        const lista = document.getElementById('lista-lancamentos');
+        const ultimos = [...lancamentos].reverse().slice(0, 20);
+
+        if (ultimos.length === 0) {
+            lista.innerHTML = '<div class="empty-state"><p>Nenhum lançamento ainda</p></div>';
+            return;
+        }
+
+        lista.innerHTML = ultimos.map(l => `
+            <div class="transaction-item ${l.pessoa.toLowerCase()}">
+                <div class="transaction-info">
+                    <h4>${l.desc} <span class="badge ${l.pessoa.toLowerCase()}">${l.pessoa}</span></h4>
+                    <p>${new Date(l.data).toLocaleDateString('pt-BR')} • ${l.metodo}</p>
+                    <span class="transaction-category">${l.categoria}</span>
+                </div>
+                <div>
+                    <div class="transaction-value">${l.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(l.valor)}</div>
+                    <div style="display: flex; gap: 5px; margin-top: 8px;">
+                        <button class="btn-editar" onclick="abrirModalEditar(${l.id})" style="flex: 1; padding: 6px; background: #2196f3; color: white; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">✏️ Editar</button>
+                        <button class="btn-danger" onclick="deletarLancamento(${l.id})" style="flex: 1; padding: 6px; margin: 0; font-size: 0.75rem;">🗑️ Deletar</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function deletarLancamento(id) {
+        if (confirm('Tem certeza que deseja deletar este lançamento?')) {
+            lancamentos = lancamentos.filter(l => l.id !== id);
+            salvarDados();
+            carregarUltimosLancamentos();
+            carregarDashboard();
+        }
+    }
+
+    function atualizarCamposFormulario() {
+        const tipo = document.getElementById('tipo-lancamento').value;
+        const grupoMetodo = document.getElementById('grupo-metodo');
+        const grupoParcelas = document.getElementById('grupo-parcelas');
+        const grupoCategoria = document.querySelector('.form-group:has(#categoria-lancamento)');
+        const grupoDataDespesa = document.getElementById('grupo-data-despesa');
+        const grupoMesReceita = document.getElementById('grupo-mes-receita');
+
+        if (tipo === 'receita') {
+            grupoMetodo.style.display = 'none';
+            grupoParcelas.style.display = 'none';
+            grupoCategoria.style.display = 'none';
+            grupoDataDespesa.style.display = 'none';
+            grupoMesReceita.style.display = 'block';
+            
+            // Define mês/ano padrão
+            document.getElementById('mes-receita').value = mesSelecionado;
+            document.getElementById('ano-receita').value = anoSelecionado;
+        } else {
+            grupoMetodo.style.display = 'block';
+            grupoParcelas.style.display = 'block';
+            grupoCategoria.style.display = 'block';
+            grupoDataDespesa.style.display = 'block';
+            grupoMesReceita.style.display = 'none';
+        }
+    }
+
+    // ==================== MODAL DE CONTAS ====================
+    function abrirModalContas(pessoa) {
+        contaPagamentoAtual = null;
+        
+        const lancamentosMes = lancamentos.filter(l => {
+            const data = new Date(l.data);
+            return (l.pessoa === pessoa || l.pessoa === 'Casal') &&
+                   data.getMonth() === mesSelecionado && 
+                   data.getFullYear() === anoSelecionado;
+        });
+
+        // Separa receitas e despesas
+        const receitas = lancamentosMes.filter(l => l.tipo === 'receita');
+        const despesas = lancamentosMes.filter(l => l.tipo === 'despesa');
+
+        // Calcula saldo acumulado (como no dashboard)
+        let saldoAcumulado = 0;
+        for (let m = 0; m <= mesSelecionado; m++) {
+            const lancamentosDoMes = lancamentos.filter(l => {
+                if (!l.data) return false;
+                const data = new Date(l.data + 'T00:00:00');
+                const mesData = data.getMonth();
+                const anoData = data.getFullYear();
+                return (l.pessoa === pessoa || l.pessoa === 'Casal') &&
+                       mesData === m && anoData === anoSelecionado;
+            });
+
+            lancamentosDoMes.forEach(l => {
+                const valor = parseFloat(l.valor || 0);
+                if (l.tipo === 'receita') saldoAcumulado += valor;
+                if (l.tipo === 'despesa') saldoAcumulado -= valor;
+            });
+        }
+        
+        const totalReceitasMes = receitas
+            .reduce((a, l) => a + parseFloat(l.valor || 0), 0);
+
+        const totalDespesasMes = despesas
+            .reduce((a, l) => a + parseFloat(l.valor || 0), 0);
+
+        const sobraMes = totalReceitasMes - totalDespesasMes;
+
+        const totalPendente = despesas
+            .filter(l => !l.pago)
+            .reduce((a, l) => a + parseFloat(l.valor || 0), 0);
+
+        const totalPago = despesas
+            .filter(l => l.pago)
+            .reduce((a, l) => a + parseFloat(l.valorPago || l.valor || 0), 0);
+
+        // Calcula sobra do mês anterior
+        let sobraMesAnterior = 0;
+        let mesAnterior = mesSelecionado - 1;
+        let anoAnterior = anoSelecionado;
+        if (mesAnterior < 0) {
+            mesAnterior = 11;
+            anoAnterior = anoSelecionado - 1;
+        }
+
+        const lancamentosMesAnterior = lancamentos.filter(l => {
+            const data = new Date(l.data);
+            return (l.pessoa === pessoa || l.pessoa === 'Casal') &&
+                   data.getMonth() === mesAnterior && 
+                   data.getFullYear() === anoAnterior;
+        });
+
+        const receitasMesAnterior = lancamentosMesAnterior
+            .filter(l => l.tipo === 'receita')
+            .reduce((a, l) => a + parseFloat(l.valor || 0), 0);
+
+        const despesasMesAnterior = lancamentosMesAnterior
+            .filter(l => l.tipo === 'despesa')
+            .reduce((a, l) => a + parseFloat(l.valor || 0), 0);
+
+        sobraMesAnterior = receitasMesAnterior - despesasMesAnterior;
+
+        document.getElementById('modalContasTitle').textContent = `Contas - ${pessoa}`;
+        document.getElementById('resumoNome').textContent = pessoa;
+        document.getElementById('resumoSaldo').textContent = formatarMoeda(saldoAcumulado);
+        document.getElementById('resumoPendente').textContent = `Pendente: ${formatarMoeda(totalPendente)}`;
+        document.getElementById('resumoPago').textContent = `Pago: ${formatarMoeda(totalPago)}`;
+        document.getElementById('resumoSobraMesAnterior').textContent = `Sobra Mês Anterior: ${formatarMoeda(sobraMesAnterior)}`;
+        document.getElementById('resumoSobraMes').textContent = `Sobra do Mês: ${formatarMoeda(sobraMes)}`;
+
+        // Mostra receitas do mês
+        document.getElementById('modalReceitasMes').textContent = formatarMoeda(totalReceitasMes);
+        document.getElementById('modalDespesasMes').textContent = formatarMoeda(totalDespesasMes);
+        document.getElementById('modalDespesasAPagar').textContent = formatarMoeda(totalPendente);
+
+        // Lista de receitas
+        const listaReceitas = document.getElementById('receitasMesList');
+        if (receitas.length === 0) {
+            listaReceitas.innerHTML = '<div class="empty-state"><p>Nenhuma receita neste período</p></div>';
+        } else {
+            listaReceitas.innerHTML = receitas.map(l => `
+                <div class="conta-item paga" style="background: #e8f5e9;">
+                    <div class="conta-info">
+                        <h4>${l.desc}</h4>
+                        <p>Valor: ${formatarMoeda(l.valor)}</p>
+                        <p>Data: ${new Date(l.data).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div style="margin-left: 10px;">
+                        <button class="btn-pagar" 
+                                onclick="abrirModalEditar(${l.id})"
+                                style="background: #2196f3;">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Lista de despesas (contas a pagar)
+        const lista = document.getElementById('contasMesList');
+        if (despesas.length === 0) {
+            lista.innerHTML = '<div class="empty-state"><p>Nenhuma despesa neste período</p></div>';
+        } else {
+            lista.innerHTML = despesas.map(l => `
+                <div class="conta-item ${l.pago ? 'paga' : 'pendente'}">
+                    <div class="conta-info">
+                        <h4>${l.desc}</h4>
+                        <p>Valor: ${formatarMoeda(l.valor)}</p>
+                        <p>Vencimento: ${new Date(l.data).toLocaleDateString('pt-BR')}</p>
+                        <p>Categoria: ${l.categoria}</p>
+                        ${l.pago ? `<p>✅ Pago em ${new Date(l.dataPago).toLocaleDateString('pt-BR')} - ${formatarMoeda(l.valorPago || l.valor)}</p>` : ''}
+                    </div>
+                    <div style="margin-left: 10px;">
+                        <button class="btn-pagar ${l.pago ? 'pago' : ''}" 
+                                onclick="abrirModalPagamento(${l.id})"
+                                ${l.pago ? 'disabled' : ''}>
+                            ${l.pago ? '✅ Pago' : '💳 Pagar'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('modalContas').classList.add('active');
+    }
+
+    function fecharModalContas() {
+        document.getElementById('modalContas').classList.remove('active');
+    }
+
+    function abrirModalPagamento(lancamentoId) {
+        const lancamento = lancamentos.find(l => l.id === lancamentoId);
+        if (!lancamento) return;
+
+        contaPagamentoAtual = lancamento;
+
+        document.getElementById('pagDesc').textContent = lancamento.desc;
+        document.getElementById('pagValorOriginal').textContent = formatarMoeda(lancamento.valor);
+        document.getElementById('pagData').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR');
+        document.getElementById('valorPago').value = lancamento.valor;
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataPago').value = hoje;
+
+        document.getElementById('modalPagamento').classList.add('active');
+    }
+
+    function fecharModalPagamento() {
+        document.getElementById('modalPagamento').classList.remove('active');
+        contaPagamentoAtual = null;
+    }
+
+    function confirmarPagamento() {
+        if (!contaPagamentoAtual) return;
+
+        const valorPago = parseFloat(document.getElementById('valorPago').value);
+        const dataPago = document.getElementById('dataPago').value;
+        const metodoPago = document.getElementById('metodoPago').value;
+
+        if (!valorPago || valorPago <= 0 || !dataPago) {
+            alert('❌ Preencha todos os campos');
+            return;
+        }
+
+        const index = lancamentos.findIndex(l => l.id === contaPagamentoAtual.id);
+        if (index !== -1) {
+            lancamentos[index].pago = true;
+            lancamentos[index].valorPago = valorPago;
+            lancamentos[index].dataPago = dataPago;
+            lancamentos[index].metodoPago = metodoPago;
+
+            salvarDados();
+            
+            if (config.googleApiUrl) {
+                sincronizarGoogle(lancamentos[index]);
+            }
+
+            alert(`✅ Pagamento registrado!\nValor: ${formatarMoeda(valorPago)}\nData: ${new Date(dataPago).toLocaleDateString('pt-BR')}`);
+
+            fecharModalPagamento();
+            abrirModalContas(contaPagamentoAtual.pessoa);
+            carregarDashboard();
+            carregarUltimosLancamentos();
+        }
+    }
+
+    // ==================== RELATÓRIO ====================
+    function atualizarRelatorio() {
+        const mesInicio = document.getElementById('rel-mes-inicio').value;
+        const mesFim = document.getElementById('rel-mes-fim').value;
+        const pessoa = document.getElementById('filtro-pessoa').value;
+        const categoria = document.getElementById('filtro-categoria').value;
+        const tipo = document.getElementById('filtro-tipo').value;
+
+        // Parse datas
+        let dataInicio = null;
+        let dataFim = null;
+
+        if (mesInicio) {
+            const [anoI, mesI] = mesInicio.split('-');
+            dataInicio = new Date(anoI, parseInt(mesI) - 1, 1);
+        }
+
+        if (mesFim) {
+            const [anoF, mesF] = mesFim.split('-');
+            // Fim do mês
+            dataFim = new Date(anoF, parseInt(mesF), 0, 23, 59, 59);
+        }
+
+        let filtrados = lancamentos;
+
+        // Filtro por período
+        if (dataInicio || dataFim) {
+            filtrados = filtrados.filter(l => {
+                const dataLancamento = new Date(l.data);
+                if (dataInicio && dataLancamento < dataInicio) return false;
+                if (dataFim && dataLancamento > dataFim) return false;
+                return true;
+            });
+        }
+
+        // Filtros adicionais
+        if (pessoa) filtrados = filtrados.filter(l => l.pessoa === pessoa || l.pessoa === 'Casal');
+        if (categoria) filtrados = filtrados.filter(l => l.categoria === categoria);
+        if (tipo) filtrados = filtrados.filter(l => l.tipo === tipo);
+
+        // Cálculos
+        const receitas = filtrados
+            .filter(l => l.tipo === 'receita')
+            .reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+
+        const despesas = filtrados
+            .filter(l => l.tipo === 'despesa')
+            .reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+
+        const saldo = receitas - despesas;
+        const percentualGasto = receitas > 0 ? Math.round((despesas / receitas) * 100) : 0;
+
+        document.getElementById('rel-receitas').textContent = formatarMoeda(receitas);
+        document.getElementById('rel-despesas').textContent = formatarMoeda(despesas);
+        document.getElementById('rel-diferenca').textContent = formatarMoeda(saldo);
+        document.getElementById('rel-percentual').textContent = `${percentualGasto}%`;
+
+        // Análise por categoria
+        const analiseCategoria = {};
+        filtrados
+            .filter(l => l.tipo === 'despesa')
+            .forEach(l => {
+                if (!analiseCategoria[l.categoria]) {
+                    analiseCategoria[l.categoria] = 0;
+                }
+                analiseCategoria[l.categoria] += parseFloat(l.valor || 0);
+            });
+
+        // Monta lista
+        const lista = document.getElementById('lista-relatorio');
+        if (filtrados.length === 0) {
+            lista.innerHTML = '<div class="empty-state"><p>Nenhum lançamento encontrado neste período</p></div>';
+            return;
+        }
+
+        // Agrupa por data
+        const agrupadosPorData = {};
+        filtrados.forEach(l => {
+            const data = new Date(l.data).toLocaleDateString('pt-BR');
+            if (!agrupadosPorData[data]) agrupadosPorData[data] = [];
+            agrupadosPorData[data].push(l);
+        });
+
+        let html = '';
+
+        // Adiciona análise por categoria se houver despesas
+        if (Object.keys(analiseCategoria).length > 0) {
+            html += '<div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<h4 style="margin-bottom: 12px; color: #333;">📊 Despesas por Categoria</h4>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">';
+            
+            Object.entries(analiseCategoria)
+                .sort((a, b) => b[1] - a[1])
+                .forEach(([cat, valor]) => {
+                    const percentual = Math.round((valor / despesas) * 100);
+                    html += `
+                        <div style="background: white; padding: 12px; border-radius: 6px; text-align: center; border-left: 4px solid #667eea;">
+                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 6px;">${cat}</div>
+                            <div style="font-size: 1.2rem; font-weight: bold; color: #f44336;">${formatarMoeda(valor)}</div>
+                            <div style="font-size: 0.8rem; color: #999; margin-top: 4px;">${percentual}%</div>
+                        </div>
+                    `;
+                });
+            
+            html += '</div></div>';
+        }
+
+        // Lista de lançamentos por data
+        html += '<h4 style="margin-bottom: 12px; margin-top: 20px; color: #333;">📋 Lançamentos</h4>';
+        
+        Object.entries(agrupadosPorData)
+            .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+            .forEach(([data, lancamentosData]) => {
+                let totalData = 0;
+                
+                html += `<div style="margin-bottom: 15px;">`;
+                html += `<div style="background: #f0f0f0; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 8px;">${data}</div>`;
+                
+                lancamentosData.forEach(l => {
+                    totalData += l.tipo === 'receita' ? parseFloat(l.valor) : -parseFloat(l.valor);
+                    html += `
+                        <div class="transaction-item ${l.pessoa.toLowerCase()}" style="margin-bottom: 8px;">
+                            <div class="transaction-info">
+                                <h4>${l.desc} <span class="badge ${l.pessoa.toLowerCase()}">${l.pessoa}</span></h4>
+                                <p>${l.categoria} • ${l.metodo}</p>
+                                ${l.obs ? `<small style="color: #999;">Obs: ${l.obs}</small>` : ''}
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="transaction-value" style="color: ${l.tipo === 'receita' ? '#4caf50' : '#f44336'}; font-weight: bold;">
+                                    ${l.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(l.valor)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `<div style="text-align: right; padding: 8px 0; border-top: 1px solid #e0e0e0; margin-top: 8px; font-weight: 600; color: ${totalData >= 0 ? '#4caf50' : '#f44336'};">`;
+                html += `Subtotal: ${totalData >= 0 ? '+' : ''}${formatarMoeda(totalData)}`;
+                html += `</div></div>`;
+            });
+
+        lista.innerHTML = html;
+    }
+
+    // ==================== SINCRONIZAÇÃO GOOGLE ====================
+    async function sincronizarGoogle(lancamento) {
+        const status = document.getElementById('sync-status');
+        status.innerText = "🟡 Sincronizando...";
+        status.className = "sync-status syncing";
+
+        try {
+            await fetch(config.googleApiUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'adicionar',
+                    lancamento: lancamento
+                })
+            });
+
+            status.innerText = "🟢 Sincronizado";
+            status.className = "sync-status online";
+        } catch (e) {
+            status.innerText = "🔴 Erro na sincronização";
+            status.className = "sync-status offline";
+            console.error('Erro ao sincronizar:', e);
+        }
+    }
+
+    function salvarConfigGoogle() {
+        const url = document.getElementById('google-api-url').value;
+        if (!url) {
+            alert('⚠️ Cole a URL do Google Apps Script');
+            return;
+        }
+
+        config.googleApiUrl = url;
+        salvarDados();
+        alert('✅ Configuração salva!');
+    }
+
+    // ==================== BACKUP E DADOS ====================
+    function salvarDados() {
+        // Salva no localStorage como backup
+        localStorage.setItem(STORAGE_KEYS.lancamentos, JSON.stringify(lancamentos));
+        localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(config));
+        
+        // E sincroniza com Firebase
+        sincronizarComFirebase();
+    }
+
+    function exportarBackup() {
+        const backup = {
+            lancamentos,
+            config,
+            dataBackup: new Date().toISOString()
+        };
+
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `financas-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    function restaurarBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const backup = JSON.parse(event.target.result);
+                    lancamentos = backup.lancamentos || [];
+                    config = backup.config || {};
+                    salvarDados();
+                    inicializar();
+                    alert('✅ Backup restaurado com sucesso!');
+                } catch (err) {
+                    alert('❌ Arquivo inválido');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function limparTudo() {
+        if (confirm('⚠️ CUIDADO: Isso deletará TODOS os dados!')) {
+            lancamentos = [];
+            config = {};
+            salvarDados();
+            inicializar();
+            alert('✅ Todos os dados foram deletados');
+        }
+    }
+
+    // ==================== UTILITÁRIOS ====================
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    }
+
+    function atualizarEstatisticas() {
+        document.getElementById('total-lancamentos').textContent = lancamentos.length;
+
+        const tamanho = JSON.stringify(lancamentos).length;
+        const tamanhoKB = (tamanho / 1024).toFixed(2);
+        document.getElementById('uso-storage').textContent = `${tamanhoKB} KB`;
+    }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+
+        if (id === 'dashboard') carregarDashboard();
+        if (id === 'relatorio') atualizarRelatorio();
+    }
+
+    // ==================== INICIAR ====================
+    window.addEventListener('load', inicializar);
+</script>
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebaseapps/js/app/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebaseapps/js/database/8.10.1/firebase-database.js"></script>
+
+<script>
+// Configuração do Firebase - Funciona para qualquer email!
+const firebaseConfig = {
+  apiKey: "AIzaSyDWyfhKeS-AdarvaYlW4P4EILJzH8rb4Yk",
+  authDomain: "financas-casal-5f017.firebaseapp.com",
+  databaseURL: "https://financas-casal-5f017-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "financas-casal-5f017",
+  storageBucket: "financas-casal-5f017.firebasestorage.app",
+  messagingSenderId: "1090897060499",
+  appId: "1:1090897060499:web:b31a6dda18d30f27e0e366"
+};
+
+// Inicializa Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  console.log('✅ Firebase inicializado com sucesso!');
+} catch (error) {
+  console.log('⚠️ Firebase já foi inicializado');
+}
+
+const database = firebase.database();
+
+console.log('✅ Realtime Database conectado!');
+
+// Sincroniza dados com Firebase
+function sincronizarComFirebase() {
+  if (!database) {
+    console.log('⚠️ Database não disponível');
+    return;
+  }
+  
+  try {
+    database.ref('lancamentos').set(lancamentos, (error) => {
+      if (error) {
+        console.log('❌ Erro ao sincronizar:', error.message);
+        document.getElementById('sync-status').textContent = "🔴 Erro";
+      } else {
+        console.log('✅ Sincronizado com Firebase! (' + lancamentos.length + ' lançamentos)');
+        document.getElementById('sync-status').textContent = "🟢 Sincronizado";
+      }
+    });
+  } catch (error) {
+    console.log('❌ Erro na sincronização:', error);
+  }
+}
+
+// Carrega dados do Firebase em tempo real
+function carregarDoFirebase() {
+  if (!database) {
+    console.log('⏳ Database não está pronto ainda');
+    return;
+  }
+  
+  try {
+    database.ref('lancamentos').on('value', (snapshot) => {
+      const dados = snapshot.val();
+      
+      if (dados && Array.isArray(dados) && dados.length > 0) {
+        console.log('🔄 Carregado do Firebase: ' + dados.length + ' lançamentos');
+        lancamentos = dados;
+        salvarDados();
+        carregarDashboard();
+        carregarUltimosLancamentos();
+        atualizarEstatisticas();
+        console.log('✅ Dashboard atualizado!');
+      } else if (dados === null) {
+        console.log('📭 Firebase vazio (primeira vez)');
+      }
+    }, (error) => {
+      console.log('❌ Erro ao escutar Firebase:', error.message);
+    });
+  } catch (error) {
+    console.log('❌ Erro ao conectar ao Firebase:', error);
+  }
+}
+
+// Sobrescreve a função original para sincronizar após adicionar
+const originalAdicionarLancamento = window.adicionarLancamento;
+window.adicionarLancamento = function() {
+  originalAdicionarLancamento.apply(this, arguments);
+  setTimeout(() => {
+    if (database) {
+      sincronizarComFirebase();
+    }
+  }, 300);
+};
+
+// Inicia carregamento do Firebase
+console.log('⏳ Iniciando carregamento do Firebase...');
+setTimeout(() => {
+  carregarDoFirebase();
+}, 2000);
+</script>
+
+</body>
+</html>
